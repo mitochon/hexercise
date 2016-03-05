@@ -1,3 +1,2 @@
-# hexercise
 
-Random exercises for learning haskell
+Random exercises while learning haskell
