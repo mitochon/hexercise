@@ -33,3 +33,22 @@ getDogR' :: Reader Person Dog
 --getDogR' = Reader $ \p -> Dog (dogName p) (address p) -- ooh, bad soln
 getDogR' = Dog <$> Reader dogName <*> Reader address
 
+
+instance Monad (Reader r) where
+  return = pure
+  
+  (>>=) :: Reader r a -> (a -> Reader r b) -> Reader r b
+  (Reader ra) >>= aRb = Reader $ \r -> (runReader $ aRb (ra r)) r
+
+
+getDogRM :: Person -> Dog
+getDogRM = do
+  name <- dogName
+  addy <- address
+  return $ Dog name addy
+
+getDogRM' :: Reader Person Dog
+getDogRM' = Reader address >>=
+            \a -> Reader dogName >>=
+                  \d -> Reader $ \p -> Dog d a
+
