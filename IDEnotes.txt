@@ -55,7 +55,6 @@ dot emacs file below
 (global-set-key (kbd "M-[") 'previous-buffer)
 ```
 
-
 ## for installing hoogle in local mode
 ht https://twitter.com/queertypes/status/733074431698833408
 
