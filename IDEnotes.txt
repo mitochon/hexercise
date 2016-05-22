@@ -1,0 +1,65 @@
+# atom
+http://blog.nikosbaxevanis.com/2016/05/19/atom-and-stack-no-globally-installed-ghc-and-packages/
+
+https://atom.io/packages/ide-haskell
+
+## install haskell-stack
+  In the same directory as Stack.yaml execute stack build ghc-mod hlint stylish-haskell
+## install atom
+  apm install language-haskell haskell-ghc-mod ide-haskell autocomplete-haskell ide-haskell-cabal
+
+# vim
+haskell-vim-now
+
+# emacs
+packages
+solarized
+haskell-mode
+fly-check
+hindent
+hi2
+
+dot emacs file below
+
+```
+;; package archives
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+
+;; load installed packages
+(package-initialize)
+
+;; cleaner look and feel
+(tool-bar-mode 0)
+(setq inhibit-startup-message t)
+
+;; line numbering
+(add-hook 'find-file-hook (lambda () (linum-mode 1)))
+
+;; column numbering
+(setq column-number-mode t)
+
+;; solarized theme
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(load-theme 'solarized-dark t)
+
+;; haskell
+(add-hook 'haskell-mode-hook 'turn-on-hi2)
+
+;; scala
+(require 'ensime)
+(add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+
+;; key bindings
+(global-set-key (kbd "M-]") 'next-buffer)
+(global-set-key (kbd "M-[") 'previous-buffer)
+```
+
+
+## for installing hoogle in local mode
+ht https://twitter.com/queertypes/status/733074431698833408
+
+git clone https://github.com/ndmitchell/hoogle …
+cd hoogle
+stack install
+time hoogle generate
