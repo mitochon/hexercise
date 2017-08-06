@@ -30,11 +30,19 @@ class LineOfSightSuite extends FunSuite {
     assert(output.toList == List(0f, 1f, 4f, 4f))
   }
 
-  test("parLineOfSight") {
-    val output = new Array[Float](10)
-    val input = Array[Float](0f, 1f, 8f, 9f, 10f, 10f, 25f, 30f, 2f, 2f)
-    parLineOfSight(input, output, 3)
+  ignore("parLineOfSight") {
+    val output = new Array[Float](17)
+    val input = Array[Float](0f, 1f, 8f, 9f, 10f, 10f, 25f, 30f, 2f, 2f,2f,2f,2f,2f,2f,2f,2f)
+    parLineOfSight(input, output, 4)
     println(output.mkString(","))
+  }
+  
+  test("downsweep should correctly compute the output for a non-zero starting angle") {
+    val input = Array[Float](0.0f, 8.0f, 7.0f, 33.0f, 48.0f)
+    val output = new Array[Float](5)
+    val tree = Node(Leaf(1, 2, 8.0f), Leaf(2, 5, 12.0f)) // make up some tree
+    downsweep(input, output, 10f, tree)
+    assert(output.toList === List(0.0f, 10.0f, 10.0f, 11.0f, 12.0f))
   }
 }
 
