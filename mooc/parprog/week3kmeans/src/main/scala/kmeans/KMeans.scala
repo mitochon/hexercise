@@ -42,8 +42,15 @@ class KMeans {
     closest
   }
 
+  // This method takes a generic sequence of points and a generic sequence of means. 
+  // It returns a generic map collection, which maps each mean to the sequence of 
+  // points in the corresponding cluster
+  // Hint: Use groupBy and the findClosest method, which is already defined for you. 
+  // After that, make sure that all the means are in the GenMap, even if their sequences are empty.
   def classify(points: GenSeq[Point], means: GenSeq[Point]): GenMap[Point, GenSeq[Point]] = {
-    ???
+    val grouped = points.groupBy(p => findClosest(p, means))
+    val unmatchedMeans = means.filterNot(grouped.keySet.contains)
+    grouped ++ unmatchedMeans.map(p => (p, GenSeq[Point]()))
   }
 
   def findAverage(oldMean: Point, points: GenSeq[Point]): Point = if (points.length == 0) oldMean else {
@@ -58,17 +65,46 @@ class KMeans {
     new Point(x / points.length, y / points.length, z / points.length)
   }
 
+  // Takes the map of classified points produced in the previous step, and the sequence of previous means.
+  // The method returns the new sequence of means.
+  // Take care to preserve order in the resulting generic sequence -- the mean i in the resulting 
+  // sequence must correspond to the mean i from oldMeans.
+  // Hint: Make sure you use the findAverage method that is predefined for you.
   def update(classified: GenMap[Point, GenSeq[Point]], oldMeans: GenSeq[Point]): GenSeq[Point] = {
-    ???
+    oldMeans.map { mean =>
+      classified.get(mean) match {
+        case Some(xs) => findAverage(mean, xs)
+        case None     => mean
+      }
+    }
   }
 
+  // The algorithm converged iff the square distance between the old and 
+  // the new mean is less than or equal to eta, for all means.
   def converged(eta: Double)(oldMeans: GenSeq[Point], newMeans: GenSeq[Point]): Boolean = {
-    ???
+    oldMeans.zip(newMeans).forall {
+      case (x, y) => x.squareDistance(y) <= eta
+    }
   }
 
   @tailrec
+  // The kMeans method should return the sequence of means, each corresponding to a specific cluster.
+  // Hint: kMeans implements the steps 2-4 from the K-means pseudocode.
+  // 1. Pick k points called means. This is called initialization.
+  // 2. Associate each input point with the mean that is closest to it.
+  //    We obtain k clusters of points, and we refer to this process as classifying the points.
+  // 3. Update each mean to have the average value of the corresponding cluster.
+  // 4. If the k means have significantly changed, go back to step 2. 
+  //    If they did not, we say that the algorithm converged.
+  // 5. The k means represent different clusters -- every point is in the cluster 
+  //    corresponding to the closest mean.
+  // your implementation need to be tail recursive
+  @tailrec
   final def kMeans(points: GenSeq[Point], means: GenSeq[Point], eta: Double): GenSeq[Point] = {
-    if (???) kMeans(???, ???, ???) else ??? // your implementation need to be tail recursive
+    val classified = classify(points, means)
+    val newMeans = update(classified, means)
+    if (!converged(eta)(means, newMeans)) kMeans(points, newMeans, eta)
+    else newMeans
   }
 }
 
