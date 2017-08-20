@@ -11,12 +11,26 @@ import common._
 
 class Simulator(val taskSupport: TaskSupport, val timeStats: TimeStatistics) {
 
+  // Given an existing boundaries object and a body, the updateBoundaries 
+  // updates the minX, minY, maxX and maxY values so that the boundaries include the body.
   def updateBoundaries(boundaries: Boundaries, body: Body): Boundaries = {
-    ???
+    val upd = new Boundaries
+    upd.minX = Math.min(boundaries.minX, body.x)
+    upd.minY = Math.min(boundaries.minY, body.y)
+    upd.maxX = Math.max(boundaries.maxX, body.x)
+    upd.maxY = Math.max(boundaries.maxY, body.y)
+    upd
   }
 
+  // The mergeBoundaries method creates a new Boundaries object,
+  // which represents the smallest rectangle that contains both the input boundaries
   def mergeBoundaries(a: Boundaries, b: Boundaries): Boundaries = {
-    ???
+    val upd = new Boundaries
+    upd.minX = Math.min(a.minX, b.minX)
+    upd.minY = Math.min(a.minY, b.minY)
+    upd.maxX = Math.max(a.maxX, b.maxX)
+    upd.maxY = Math.max(a.maxY, b.maxY)
+    upd
   }
 
   def computeBoundaries(bodies: Seq[Body]): Boundaries = timeStats.timed("boundaries") {
@@ -25,20 +39,25 @@ class Simulator(val taskSupport: TaskSupport, val timeStats: TimeStatistics) {
     parBodies.aggregate(new Boundaries)(updateBoundaries, mergeBoundaries)
   }
 
+  // aggregate the SectorMatrix from the sequence of bodies, 
+  // the same way it was used for boundaries.
+  // Use the SECTOR_PRECISION constant when creating a new SectorMatrix.
   def computeSectorMatrix(bodies: Seq[Body], boundaries: Boundaries): SectorMatrix = timeStats.timed("matrix") {
     val parBodies = bodies.par
     parBodies.tasksupport = taskSupport
-    ???
+    parBodies.aggregate(new SectorMatrix(boundaries, SECTOR_PRECISION))(_ += _, _ combine _)
   }
 
   def computeQuad(sectorMatrix: SectorMatrix): Quad = timeStats.timed("quad") {
     sectorMatrix.toQuad(taskSupport.parallelismLevel)
   }
 
+  // The updateBodies method uses the quadtree to map each body from 
+  // the previous iteration of the algorithm to a new iteration
   def updateBodies(bodies: Seq[Body], quad: Quad): Seq[Body] = timeStats.timed("update") {
     val parBodies = bodies.par
     parBodies.tasksupport = taskSupport
-    ???
+    parBodies.map(_.updated(quad)).seq
   }
 
   def eliminateOutliers(bodies: Seq[Body], sectorMatrix: SectorMatrix, quad: Quad): Seq[Body] = timeStats.timed("eliminate") {
