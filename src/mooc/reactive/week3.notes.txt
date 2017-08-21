@@ -1,0 +1,38 @@
+Try -> may fail
+ Success
+ Failure
+
+Future -> long time and may fail
+ onComplete(callback: Try[T] => Unit)
+ onSuccess
+ onFailure
+ implicit execution context
+
+Future { } // factory method
+
+"flatmap is the hero of every monad"
+
+recover
+recoverWith
+fallbackTo
+
+Awaitable 
+- goes out of the Monad // dangerous
+- blocks
+
+Replace recursion with foldLeft / foldRight
+
+async {... await{...} ... }
+
+await strips off a level of future
+async adds a level of future
+
+Promise
+ future
+ complete
+ tryComplete
+ can be completed only once
+p.success
+p.failure
+
+idempotent -- meaning?
