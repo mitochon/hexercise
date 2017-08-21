@@ -1,0 +1,139 @@
+# Week 6
+
+Applications of public key encryptions
+- For setting up secure session (between browser - server)
+- Non-interactive applications (e.g. email)
+  Bob sends email to Alice encrypted using p_k_alice; caveat: Bob needs p_k_alice (through public key management system)
+
+Public key encryptions (G,E,D)
+- G() randomized algorithm outputs key pair (pk, sk)
+- E(pk,m) randomized algorithm that takes m in M and output c in C
+- D(sk,c) deterministic algorithm that takes c in C and output m in M or (bottom)
+-> D(sk, E(pk,m)) = m
+
+For public key encryption: one-time security => many-time security
+vs symmetric cipher security where this doesn't hold; with one-time-pad, etc
+
+public key encryption must be randomized
+
+# CCS (chosen ciphertext security)
+Secure symmetric cypher provides (authenticated encryption (AE) = chosen plaintext security && ciphertext integrity)
+e.g. attacker cannot create new ciphertexts; implies security against CCA (chosen ciphertext attack)
+
+in public-key setting, attacker CAN create new ciphertexts using pk
+CCS is more stringent than AE
+
+# Trapdoor functions (TDF)
+A triplet of efficient algs (G,F,F^-1)
+G() generates (pk,sk)
+F(pk,.) X -> Y
+F^=1(sk,.) Y -> X
+;;; F^-1(sk, F(pk,x)) = x
+
+Secure trapdoor function
+(G,F,F^-1) is secure if F(pk,.) is a "one-way" function can be evaluated, but cannot be inverted without sk
+
+public-key encryption from TDFs : build (G,E,D) using
+(G,F,F^-1) ; secure TDF X -> Y
+(Es,Ds) ; symmetric A.E defined over (K,M,C)
+H: X -> K ;a hash function
+
+E(pk,m):
+ x <- X at random; y <- F(pk,x)
+ k <- H(x); c <- Es(k,m)
+ output(y,c)
+
+D(sk, (y,c))
+ x <- F^-1(sk,y)
+ k <- H(x); m <- Ds(k,c)
+ output m
+
+Incorrect use of a TDF: never encrypt by applying F directly to plaintext: 
+E(pk,m) [ output c <- F(pk,m) ]
+D(sk,c) [ output m <- F^-1(sk,c) ]
+Problems: deterministic <= cannot be semantically secure; many attack exists
+
+# RSA trapdoor permutation
+First published 1977
+Widely used, e.g.for SSL/TLS, secure email / file systems
+
+G() 
+- choose random primes, p,q ~ 1024 bits. Set N = p.q
+- choose integers e, d s.t e.d=1 (mod (phi(N)))
+- output pk = (N,e); sk = (N,d)
+
+F(pk,x) = RSA(x) = x^e
+F^-1(sk,y) = y^d = RSA(x)^d = x^(ed) = x^(k.phi(N)+1) = x (see lect. notes for details)
+
+RSA assumption: RSA is a one-way permutation
+
+Note: RSA is not an encryption system, it's a trapdoor function and thus should not be used by itself.
+
+# PKCS1
+
+RSA encryption in practice
+msgkey (e.g. 128-bit AES key) -> preprocessing -> RSA key (2048-bit)
+
+PKCS1 (public key cryptography standard 1) as a way to pre-process
+
+# Is RSA a one-way function?
+
+RSA is insecure if private key d can be found from (N,e)
+in RSA, d ~ 2^2048
+Wiener '87 - if d < N^.25 then RSA is insecure (d < 2^512)
+BD'98 - if d < N^.292 then RSA is ; .292 = 1 - (1/sqrt(2))
+
+Should not improve RSA by reducing key size
+
+# RSA in practice
+c = m^e (mod N)
+minimum value e=3
+recommended value e=65537=2^16+1 (using 17 multiplications)
+
+Assymetry for RSA: fast enc / slow dec
+RSA-CRT(speeds up decryption by factor of 4)
+
+various attacks on RSA (see lecture slides for details)
+
+# El Gamal encryption
+based on Diffie-Hellman protocol
+
+G: finite cyclic group of order n
+(Es,Ds) symmetric A.E defined over (K,M,C)
+H: G^2 -> a hash function
+
+Construct public-key generation system (Gen,E,D)
+Key generation Gen:
+- choose random generator g in G and random a in Z_n
+- output sk=a; pk=(g,h=g^a)
+
+E(pk=(g,h),m)
+ b <- Z_n; u <- g^b; v <- h^b
+ k <- H(u,v); c <- Es(k,m)
+ output(u,c
+
+D(sk=a,(u,c))
+ v <- u^a = (g^b)^a
+ k <- H(u,v); m <- Ds(k,c)
+ output m
+
+Performance
+
+Encryption: 2 exponentiation (fixed basis)
+- can pre-compute[g^(2^i), h^(2^i), for i = 1,...,log_n]
+- 3x speed-up (or more)
+
+Decryption: 1 exponentiation (variable basis
+
+# Computational Diffie-Hellman (CDH) Assumption
+
+CDH holds in finite cyclic group G of order n if from g, g^a, g^b it is difficult to compute g^(ab)
+
+# Hash Diffie-Hellman Assumption (stronger assumption than CDH)
+
+For a finite cyclic group of order n, H:G^2 -> K a hash function, HDH assumption holds for (G,H) if (g,g^a,g^b,H(g^b,g^a)) ~ (g,g^a,g^b,R) where g <- {generators of G}, a, b <- Z_n, R <- K
+
+To prove chosen ciphertext security need stronger assumption than HDH: Interactive Diffie-Helman (IDH)
+
+CDH can be used directly using method called twin ElGamal
+Cost: one more exponentiation during enc/decr

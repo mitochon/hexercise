@@ -1,0 +1,103 @@
+### Week 1
+Uses of encryption:
+anonymous transaction
+secure multi party computation -> f(x1,x2,x3)
+e.g. elections; private auctions
+
+Theorem: anything can be done with trusted authority can also be done without
+
+Sample Applications:
+privately outsourcing computation => send encrypted query
+zero knowledge 
+
+3 steps in crypto
+- precisely specify threat model
+- propose construction
+- prove that breaking construction under threat mode will solve an underlying hard problem
+
+Broken examples
+
+## substitution cipher -> one to one mapping 
+ for 26 letter cipher -> key space: 26! ~ 2^88
+ how to break: 
+  1. use frequency mapping -> e: 12.7%, t:9.1%, a: 8.1%
+  2. use frequency of pairs of letters (digram) -> "he", "an", "in", "th" (4 most common)
+cipher text only attack (worst)
+
+## caesar cipher -> shift by 3
+## vigener cipher -> 16th century, Rome
+  both can be broken using frequency mapping
+
+## DES (data encryption standard) - 1974 by IBM
+ keyspace 2^56, block size 64 bits, now considered unsecure
+
+Important property of XOR (binary addition mod 2)
+Theorem: for Y a random variable over {0,1}^n; X an independent uniform var on {0,1}^n
+Then Z:=Y(XOR)X is uniform var on {0,1}^n
+
+Theorem: when n = 1.2x |U|^(1/2) then Pr[exists i!=j: ri=rj] >= 1/2
+Birthday paradox -> 1.2 * sqrt(365) ~ 24 (if 24 people in a room there is > 1/2 probability two of them share the same birthday) - assuming equal probability 1/365
+
+## The one time pad (OTP) - Vernam 1917
+
+A cipher (E,D) over (K,M,C) has perfect secrecy if forall m0,m1 and len(mo)==len(m1) => Pr[E(k,mo)=c] = Pr[E(k,m1)=c] where k is uniformly distributed
+
+no CT (cipher text) only attacks, but other attacks possible
+secret key is really long; hard to use
+
+
+## Stream ciphers and pseudo random generators (PRG)
+Stream ciphers make OTP practical by using a PRG to generate key
+
+PRG is a func G:{0,1}^s -> {0,1}^n , s << n,  (seed -> output)
+"efficiently" computable by a deterministic algorithm
+
+Stream ciphers cannot have perfect secrecy because key << cipher
+Why is it secure? PRG must be unpredictable, where predictable means: 
+Given first i bits, there exists an efficient algorithm to compute the next bit of the output
+
+## Weak PRG's
+linear cong. gen. : Given, a,b, p(prime); r[0] = seed; r[i] <- a.r[i-1] * b mod p; 
+glibc random() => r[i] <- ( r[i-3] + r[i-31] ) % (2^32); output r[i] >> 1
+
+in practice
+epsilon non negligible >= 1/(2^30) - likely to happen over 1Gb of data
+epsilon negligible <= 1/(2^80) - wont happen over life of key
+
+in theory
+epsilon non negligible if >= 1/poly, for many lambda
+epsilon negligible if <= 1/poly, for large lamba
+
+## Two time pad
+is insecure - do not use the same key to encrypt multiple messages
+for client-server interaction (bi-directional) use different keys for each direction
+
+Some examples
+Project Venona (WWII)
+Microsoft NT - PPTP 
+802.11b WEP - multiple design flaws
+- closely related keys
+- PRG is repeated after ~10^6 frames
+
+Disk encryption -> do not use stream cipher (one time pad can be used twice)
+
+## No integrity (OTP is malleable)
+
+RC4 weaknesses
+. Bias in initial output Pr(2nd byte = 0) = 2/256 (should be 1/256)
+. Prob of (0, 0) is 1/256^2 + 1/256^3 (should be just 1/256^2)
+. Related key attacks
+
+LFSR (linear feedback shift register)
+. DVD encryption (CSS) - 2 LFSR
+. GSM encryption - 3 LFSR
+. Bluetooth - 4 LFSR
+
+## Examples that work - eStream (completed 2008)
+- uses a combination of 'seed' and a 'nonce' as input to PRG
+- e.g. Salsa 20 (designed both Software and Hardware) - is one of the 5 output from the eStream project
+
+Secure PRG: for all 'efficient' statistical test A, Adv_prg[A,G] is negligible
+A secure PRG is unpredictable
+An unpredictable PRG is secure
+

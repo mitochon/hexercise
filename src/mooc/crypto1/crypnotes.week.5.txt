@@ -1,0 +1,131 @@
+# Key management
+
+TTP (Trusted Third Party) to manage user keys
+
+TTP needed for every key exchange, knows all session keys, if compromised is a single point of failure
+- basis of Kerberos system
+
+Toy protocol example
+secure against eavesdropping attack
+insecure against active attacks, e.g. attacker records session between Alice and merchant Bob; attacker replays session to Bob; Bob thinks Alice is ordering another copy of the book
+
+can we generate shared keys without an online trusted 3rd party? Yes.
+This was starting point of public-key cryptography
+
+# Merkle Puzzles
+key exchange without online TTP? goal: Alice and Bob want shared key, unknown to eavesdropper
+puzzle: problems that can be solved with some effort
+Example: E(k,m) a symmetric cipher where k is 128 bit
+ puzzle (P) = E(P, "message") where P =  0^96||b1...b32
+ goal - find P by trying all 2^32 possibilities
+
+Alice: prepare 2^32 puzzles -> O(n)
+Bob: sends back code 'x_j' that identifies secret key 'k_j' -> O(n)
+Eavesdropper work: O(n^2)
+
+roughly speaking, quadratic gap is best possible if we treat cipher as a block box oracle
+
+# Diffie-Hellman protocol
+creates exponential gap (vs quadratic gap for Merkle puzzles)
+
+Fix a large prime p (e.g. 600 digits)
+Fix an integer g in {1,..,p}
+
+Alice: choose random a in {1,..,p-1}: A <- g^a (mod p)
+Bob: choose random b in {1,..,p-1}: B <- g^b (mod p)
+
+B^a (mod p) = (g^b)^a = k_AB = g^(ab) (mod p) = A^b (mod p)
+
+For a prime p n-bits long
+Best known algorithm (GNFS) - run time = exp(O(n)^1/3)
+
+Slow transition away from (mod p) to elliptic curves
+
+Insecure against MiTM (man-in-the-middle) attacks
+
+# Public key encryption
+
+A triple of algs (G, E, D)
+- G() - randomized alg outputs a key pair (pk, sk)
+- E(pk, m) - randomized alg that takes m in M and outputs c in C
+- D(sk, m) - deterministic alg that takes c in C and outputs m in M or (bottom)
+- D(sk, E(pk, m)) = m
+
+Insecure against MiTM (man-in-the-middle) attacks
+
+# Number Theory
+For all int x, y there exists a,b s.t a.x + b.y = gcd(x,y)
+If gcd(x,y)=1 we say that x,y are relatively prime
+
+The inverse of x in Z_n is an element y in Z_n s.t x.y = 1 in Z_n
+y is denoted x^-1
+
+Example: let N be an odd integer. The inverse of 2 in Z_n is [N+1]/2
+
+Lemma: x in Z_n has an inverse iff gcd(x,N) = 1
+
+To solve: a.x + b = 0 in Z_n => x = -b.a^-1 in Zn
+Find a^-1 in Zn using extended Euclid. Run time O(log^2(n))
+
+# Euler and Fermat
+
+Fermat test: Let p be a prime, x^(p-1) = 1 in Z_p
+x.x^(p-2) = 1 => x^-1 = x^(p-2_ in Z_p
+
+Takes time O(log^3(n)), and also works only for primes
+
+application: generating a large random prime with low probability error
+
+Euler: The structure of (Z_p)*
+(Z_p)*  is a cyclic group: there exists g in (Z_p)* such that {1,g,g^2,g^3,...,g^(p-2)} = (Z_p)*
+(no g^(p-1) since it's 1 by Fermat's)
+g is called a 'generator' of (Z_p)*
+
+ord_p(g) = |<g>| = smallest a > 0 such that g^a = 1 in Z_p
+
+Lagrange: ord_p(g) divides p-1
+
+Euler's generalization of Fermat
+For an integer N define phi(N) = |(Z_n)*|; phi(p) = p-1
+For N=p.q; phi(N) = N-p-q+1 = (p-1)(q-1)
+Thm (Euler): x^(phi(N)) = 1 in Z_n
+
+modular e'th root
+x^e=c in Z_p is called an e'th root of c
+examples: 7^(1/3)=6 in Z_11 as 6^3 = 218 = 7 in Z_11
+
+when does c^(1/e) in Z_p exists? Can we compute efficiently?
+Suppose gcd(e, p-1) = 1 then for all c in (Z_p)* -> c^(1/e) exists in Z_p and is easy to find
+
+if p is an odd prime then gcd(2, p-1) != 1
+Fact: in Z_p, x->x^2 is a 2-to-1 function
+x in Z_p is a quadratic residue (Q.R) if it has a square root in Z_p
+if p = odd prime, then the # O.R in Z_p is (p-1)/2 + 1
+
+Thm: x in (Z_p)* is a Q.R <=> x^(p-1)/2 = 1 in Z_p
+
+x^(p-1)/2 is called the Legendre symbol of x over p (1798)
+
+# Arithmetic algorithms
+Choose large prime as multiple of 32-bit, e.g. 2048-bit integer (assuming 64-bit machine) 
+
+Given two n-bit integer
+- addition and substraction: linear time O(n)
+- multiplication: naively O(n^2); Karatsuba(1960) O(n^1.585)
+  basic idea (2^b.x2+x1) x (2^b.y2+y1) with 3 multiplication instead of 4
+- division: O(n^2)
+- exponentiation: O(log(x).Tx) <= O(log(x).n^2) <= O(n^3); Tx is time to multiply x.
+using the repeated squaring algorithm, as follows:
+input: g in G and x > 0; output: g^x
+write x in binary
+y <- g, z <- 1
+for i = 0 to n do:
+  if (x[i]==1): z <- z.y
+  y <- y^2
+output z
+
+# Intractable problems
+around calculation of discrete log : log modulo
+(Z_p)* for large p
+elliptic curve groups mod p
+factoring composite numbers into prime numbers for large primes

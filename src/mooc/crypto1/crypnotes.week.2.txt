@@ -1,0 +1,157 @@
+
+### Week 2
+
+# Block ciphers
+n bit input / output, k bit key e.g. AES n=64; k=168, 3DES n=128; k=128,192,256
+typically bit by iteration using round function -> R(k,m) -> for creating the round key
+
+performance of block cipher considerable slower than performance of stream cipher, but can do certain things more efficiently
+
+PRF (pseudo random function) F: K x X -> Y such that exists efficient algorithm to evaluate F(k,x)
+
+PSP (pseudo random permutation) E: K x X -> X such that 
+1. exists efficient deterministic algorithm to evaluate E(k,x)
+2. E(k,.) is 1-1 map
+3. exists efficient inversion algorithm D(k,y)
+
+any PRP is also a PRF: a PRP is a PRF where X = Y and is efficiently invertible
+
+a PRF is secure if a random function from universe U is indistinguishable from a random function in the seed set S
+
+G(k) = F(k,0) || F(k,1) || ... || F(k,n) 
+Key component : parallelizable
+
+# Data Encryption Standard (DES), Advanced Encryption Standard (AES)
+
+Until recently DES was used in banking (ACH transation), e-commerce
+
+Feistel network -> hardware support for inversion - general method for building block ciphers from arbitrary functions
+
+DES: 16 round Feistel network
+functions implemented as 'S box' -> lookup table
+
+for a linear DES cipher
+DES(k,m1) xor DES(k,m2) xor DES(k,m3) = DES(k, m1 xor m2 xor m3)
+
+requirements for 'S box' and 'P box':
+- should be nowhere close to a linear function
+- S boxes are 4-1 map
+
+DES was compromised by exhaustive search, starting in 1997
+But a lot of systems are built on top of it
+
+Triple-DES (3DES)
+3E( [k1,k2,k3], m) = E(k1, D(k2, E(k3, m)))
+
+3DES: key size = 3 x 56 = 168 bits; but 3x slower than DES
+
+Why not double DES? insecure => E(k1, E(k2, m)) = C ...
+rewrite => E(k2, m) = D(k1, C)
+'meet in the middle' attack
+
+# Attacks on the implementation
+1. Side channel attacks: measures time to do E/D, measure power for E/D
+2. Fault attacks: computing errors in the last round expose the secret key
+
+# Linear and differential attacks
+for many input/output pairs, can recover key in time less than 2^56.
+5th S box in DES too close to linear function
+epsilon = 1/2^21
+
+Pr[m[i1] xor...xor m[ir]] xor c[jj] xor ... c[jv]] = 1/2 + epsilon
+Thm: given 1/epsilon^2 random (m, c=DES(k,m)) pairs then key can be deduced from majority of (m[i1,..,ir] xor c[jj,...jv]) with prob >= 97.7%
+
+For DES, epsilon = 1/2^21, with 2^42 input/output pairs can find key in time 2^42
+Can find 14 key 'bits' this way in time 2^42, then brute force remaining 56-14=42 bits in time s^42. Total attack time = 2 * 2^42 = 2^43 (<< 2^56) with 2^42 random input output pairs (compare with 3 pairs when using exhaustive search)
+
+Lesson - a tiny bit of linearity in S5 lead to a 2^42 time attack
+
+# Quantum attacks
+f: X -> {0,1} be a function
+Goal: find x member of X such that f(x) = 1
+
+Classical computer: best generic algorithm time = O(|X|)
+Quantum computer: time O(|X|^.5)
+In theory, if such a computer can be built, can break DES in 2^28, and AES-128 in time 2^64 (considered insecure)
+
+## AES
+The round function
+ - byte substitution - 1-byte S-Box; 256-byte table (16x16bits)
+ - shift rows 
+ - mix columns - matrix linear transformation
+
+The round function can be implemented via code (pre-compute) or via hardware (compute on the fly) - larger code size ~ faster
+
+Attacks:
+- Exhaustive search: 2^256
+- Best key recovery attack: 4x better than exhaustive search
+- Related key attack: given 2^100 in/out pairs from four related keys in AES-256 can recover keys in time ~2^99
+
+PRF switching lemma: Any secure PRP is alo a secure PRF, if |X| is sufficiently large
+
+# Semantic security / one time key
+
+Incorrect use of PRP
+Electronic Code Book (ECB) - divide message by blocks and encrypt each separately. If block b1 has same message as block b2, then the cipher text c1 == c2 and the attacker has some information regarding the structure of the data. ECB is not semantically secure.
+
+Should use stream cipher to encode each block, then xor with the message to get cipher text.
+
+# Semantic security / many-time key
+examples: file system (same key for multiple files), networking protocols (multiple packets for same key)
+
+Adversarys's power: chosen plaintext attack (CPA)
+- Can obtain the encryption of arbitrary messages of his choice
+
+Deterministic encryption cannot be secure under CPA. 
+If the secret key is to be used multiple times -> given the same plaintext message twice, encryption must product different outputs
+
+Solution 1: randomized encryption
+- encrypting same msg twice give different ciphertexts (w/ high probability)
+- ciphertet must be longer than plaintext: CT-size = PT-size + #randombits
+
+Solution 2: nonce-based encryption
+- nonce n: a value that changes from msg to msg: (k,n) pair never used more than once
+- method 1: nonce is a couner (e.g. packet counter)
+  used when encryptor state from msg to msg
+  if decryptor has same state, need not send nonce with CT
+- method 2: encryptor chooses a random nonce
+
+System should be secure when nonces are chosen adversarially
+
+# CBC (cipher block chaining)
+
+Construction 1: CBC with random IV (initialization vector)
+
+CBC theorem: if E is a secure PRP over (K,X) then E_cbc is semantically secure under CPA over (K, X^L, X^(L+1))
+
+CBC is only secure as long as q^2 * L^2 << |X| where q is #  (or practically, number of times the same key is used to encrypt same message), L is msg length.
+
+For AES: |X| = 2^128 => qL < 2^48, so after 2^48 AES block, must change key
+For 3DES: |X| = 2^64 => qL < 2^16
+
+common mistake - if IV is predictable, CBC is no longer CPA secure
+
+CBC with unique nonce: key = (k, k1)
+generate IV using nonce and k1
+nonce MUST be random and encrypted
+
+Construction 2: randomized counter mode
+IV chosen at random for every message - parrallelizable
+
+Related variant: nonce counter mode
+combine a random nonce as 1st 64 bit and a normal counter as 2nd 64 bit
+make sure counter doesn't reset after 2^64 runs otherwise not a one-time-pad
+
+counter mode only secure as long as q^2 * L << |X| - better than CBC
+can be used for 2^64 AES block (vs 2^48 for CBC)
+
+# CBC vs Counter mode
+- uses: PRP PRF -> PRF is more flexible (e.g. can use primitives like salsa20)
+- parallel processing: No Yes
+- Security of random encoding q^2 * L^2 << |X| ; q^2 * L << |X|
+- Dummy padding block Yes No
+- 1 byte messages (nonce-based) 16x expansion; no expansion
+
+Semantic security
+- one-time-key: stream-ciphers
+- many-time-key: random CBC, random counter mode

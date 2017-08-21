@@ -1,0 +1,147 @@
+Week 3 part 1: Message integrity
+
+# MAC (message authentication code)
+
+MAC I = (S,V) defined over (K, M, T) is a pair of alg's
+Generate tag <- S(k,m)
+Verify tag <- V(k,m,tag) outputs yes/no
+
+Integrity requires a secret key
+
+CRC (cyclic redundancy check) designed to detect RANDOM, not malicious errors => Attacker can easily modify message m and recompute CRC
+
+Chosen message attack : attacker can compare between message and S(k,m)
+attacker's goal: existential forgery - produce some 'new' valid message/tag pair (m,t)
+Secure MAC 
+-> attacker cannot produce a valid tag for a new message
+-> given (m,t) attacker cannot even produce (m,t') for t'!=t
+
+MAC is secure if existentially forgable
+
+common tag-size: 64, 96, 128 bits
+
+# MAC based on PRF's
+
+Secure PRF gives secure MAC's as well ... however ... Bad example: if PRF with 10 bits -> is NOT secure because the tags are too short (1/2)^10  is non-negligible. This is the only exception .. for sufficiently lengthy PRF generator, secure PRF means secure MAC's.
+
+AES: a MAC for 16-byte messages
+How to convert small-MAC into a big-MAC?
+Two main construction in practice
+-CBC-MAC (banking - for clearing ACH)
+-HMAC (internet protocols: SSL, IPSec, SSH, ...)
+
+# CBC-MAC and NMAC
+
+Given a PRF for short messages, construct a PRF for long messages
+
+Construction: 
+1. ECBC (encrypted CBC) = uses raw CBC (not secure) => passed through a separate, independent key in last encryption step to generate final (secure) output.
+
+2. NMAC (nested MAC) - uses a cascade function => then also uses independent key in last encryption step to generate final (secure) output.
+
+For raw CBC, can be broken using 1-chosen msg attack:
+-> Choose an arbitrary one-block message m 
+-> request tag for m : t = F(k,m)
+-> Output t as MAC forgery for 2-block message (m, t xor m)
+=> rawCBC(k, (m, t xor m)) = F(k, F(k,m) xor (t xor m)) = F(k, t xor (t xor m)) = F(k,m) = t
+
+For NMAC, if using just the cascade function - subject to an extension attack -> attacker appends message w to m (m||w) to get t' = F(t)
+
+Adv_prf[A, F_ecbc] <= 1/2^32 <= q^2/|X| < 1/2^32
+For AES -> 	q < 2^48 (ok) ... so after 2^48 messages, must change key
+For 3DES -> q < 2^16 (too small)
+
+After signing |X|^1/2 messages with ECBC-MAC or |K|^1/2 messages with NMAC the MACs become insecure.
+
+ECBC-MAC is commonly used as an AES-based MAC
+NMAC not usually used with AES or 3DES: main reason - need to change AES key on every block / requires re-computing AES key expansion
+
+NMAC is the basis for a popular MAC called HMAC
+
+# MAC padding
+
+Bad idea: pad message m with 0's when bit size doesn't match
+Problem: pad(m) = pad(m||0)
+
+For security, padding must be invertible
+m0 != m1 => pad(m0) != pad(m1)
+
+ISO: pad with '1000...000' and add new dummy block if needed .. the '1' indicates the beginning of pad
+
+CMAC - 3 key construction using key (k, k1, k2) that does not need padding function.
+
+# PMAC (Parallel MAC)
+
+PMAC is secure as long as qL << |X|^1/2
+
+PMAC is incremental - changing message m1 to m1' -> recomputation can be done very quickly
+
+# one-time MAC (analog of one-time-pad)
+can be secure against all adversaries and faster than PRF based MAC's
+
+key = (k,a) in the range {1 ... q } where q is a large prime
+Pmsg(x) = m[L].x^L+..+m[1].x
+S(key,msg) = Pmsg(k) + a (mod q)
+
+Given S(key,msg1) adv has no info about S(key,msg2)
+
+# Carter Wegman
+One-time MAC => many time MAC using Carter-Wegman MAC (CW)
+Let (S,V) be a secure one-time MAC over (K1, M, {0,1}n)
+Let F:K_f x {0,1}n -> {0,1}n be a secure PRF
+CW((k1,k2), m) = (r, F(k,r1) xor S(k2,m))) for random r <- {0,1}n
+Theorem: If (S,V) is a secure one-time MAC and F is a secure PRF then CW is a secure MAC outputting tags in {0,1}^2n
+
+
+# HMAC
+
+Week 3 part 1: Collision resistance
+
+Recap
+ECBC-MAC, CMAC: commonly used with AES
+NMAC: basis of HMAC
+PMAC: a parallel MAC
+CWMAC: built from a fast one-time MAC (randomized MAC)
+
+Def: I_big = (S_big, V_big) over (K, M_big, T) as S_big(k,m) = S(k, H(m)); V_big(k,m,t) = V(k,H(m),t)
+
+Theorem: If I is a secure MAC and H is collision resistant then I_big is a secure MAC.
+
+Example: S(k,m) = AES_2block-cbc(k, SHA-256(m)) is a secure MAC
+
+Collision resistance is necessary for security
+
+Example: protecting file integrity using collision resistance hash
+H collision resistant => attacker canot modify package without detection; no key needed (public verifiability), but requires read-only space
+
+# Building Collision resistant hash function
+
+Merkle-Damgard iterated construction
+
+Given h: T x X -> T (compression function)
+we obtain H: X^(<=L) -> T ... Hi - chaining variables 
+Padding block: 1000...000|| msg len
+If no space for Padding block .. add another block
+
+Theorem: if h is collision resistant then so is H
+Proof: collision on H => collision on h
+
+So to construct C.R function, suffices to construct compression function
+
+Compression function from a block cipher
+
+Davies-Meyer construction: h(H,m)=E(m,H) xor H
+
+Theorem: if E is an ideal cipher (collection of |K| random permutations). Finding a collisiong h(H,m)=h(H',m') takes O(2^(n/2)) evaluations of (E,D) ... i.e. best possible case
+
+Davies-Meyer used for all the SHA functions
+
+Other block cipher construction: Miyaguchi-Preneel
+
+Case study: SHA-256
+- Merkle-Damgard function
+- Davies-Meyer compression function
+- Block cipher: SHACAL-2
+
+Provable compression functions: idea is to find collision is as hard as solving a known hard problem (e.g. 'discrete-log' modulo p)
+

@@ -1,0 +1,225 @@
+Week 4 part 1
+
+Recap
+Confidentiality 
+- semantic security against a CPA (chosen plaintext attack)
+- i.e. secure against eavesdropping only
+
+Integrity
+- securing against existential forgery
+- CBC-MAC, HMAC, PMAC, CW-MAC
+
+This module 
+- encryption secure against tampering (both confidentialit + integrity)
+
+IPSec - encrypt packets at TCP/IP level
+
+(A.E) Authenticated encryptions system (E,D) is a cipher where
+E: K x M x N -> C (as before)
+D: K x C x N -> M union (bottom) -> (bottom) means cipher text is rejected
+the system provides
+- semantic security under a CPA attack (as before)
+- ciphertext integrity, i.e. attacker cannot create new ciphertexts that decrypt properly
+
+CBC with random IV does not provide A.E: D(k,.) never outputs (bottom)
+
+implication 1: authenticity - attacker cannot fool Bob into thinking a message was sent from Alice. Note exception: does not protect against message replay
+
+implication 2: defends against chosen ciphertext attacks
+
+# chosen ciphertext attack (CCA)
+
+examples
+- adversary can fool server into decrypting certain ciphertexts
+- adversary can learn partial information about plaintext (check if valid checksum
+
+chosen ciphertext security
+adversary's power: both CPA and CCA
+- can obtain the encryption of arbitrary messages of his choice
+- can decrypt any ciphertext of his choice, other than the challenge ciphertext
+adversary's goal: break semantic security
+
+Note: handy to remember, for CBC with random IV, IV xor 1 -> produces m_b xor 1, where m_b is the b'th block of original messsage m.
+
+Limitations of A.E
+ does not prevent replay attacks
+ does not prevent side channel attacks (e.g. timing)
+
+A.E concept introduced in '00
+Crypto api's before then provide API for CPA-secure encryption and an API for MAC separately and developers had to combine them together without a well defined goal. Hence not all combination provide A.E
+
+Combining MAC and ENC (CCA)
+
+Option1: SSL (mac-then-encrypt)
+msg m -> msg m || S(k_i, m) = tag -> E(k_E, m||tag)
+-> some cases where its insecure due to interaction between tag and E function
+-> secure in cases when (E,D) is randomized ctr mode or randomized CBC; and for randomized ctr mode, one-time MAC is sufficient
+
+Option2: IPSec (encrypt-then-mac)
+msg m -> E(k_E, m) -> E(k_E, m) || S(k_i, c)
+-> always correct
+
+Option3: SSH (encrypt-and-mac)
+msg m -> E(k_E, m) -> E(k_E, m) || S(K_i, m)
+-> not secure because the output tag is based on the message (m), and it may leak over the actual content of the message itself (which is fine for Integrity but not secure for CPA)
+
+Standards for A.E
+- GCM: ctr mode encryption then CW-MAC
+- CCM: CBC-MAC then CTR mode encryption (both AES-based), used in 802.11i-wifi
+- EAX: ctr mode encryption then CMAC
+
+All support AEAD (aut.enc with associated data). All are nonce-based.
+(nonce is non-random, but unique per key)
+
+MAC security implies (m,t) !=> (m,t')
+Why? suppose not (m,t) -> (m,t') ... then encrypt-then-mac would NOT have ciphertext integrity
+
+OCB: more efficient than MAC + ENC (do 1-step instead of 2-step)
+- completely parallelizable
+- not widely used due to some stupid reason
+
+# Case Study : TLS (MAC-then-ENC scheme)
+- unidirectional keys : k_(b->s), k_(s->b); s=server; b=browser
+- stateful encryption
+  each side maintain 2 64-bit counters
+  init to 0 when session started, counter++ for every record
+  purpose: to protect against replay attack
+
+TLS record: 
+encryption using k_(b->s) = (k_mac, k_enc) = (CBC AES-128, HMAC-SHA1)
+Browser side: enc(k_(b->s), data, counter(b->s))
+decryption using the same thing reversed
+
+Bugs in older versions
+- IV for CBC is predictable (chained IV) -> IV for next record is last ciphertext block of current record -> not CPA secure (e.g. BEAST attack)
+- padding oracle: during decryption, if pad is invalid send different signal then when mac is invalid -> attacker learns info about plaintext
+
+*** Lesson: in crypto, when decryption fails, do NOT explain why
+
+# CBC padding attacks on TLS
+
+padding oracle attack -> type of CCA (chosen ciphertext attack)
+- encrypt-then-MAC -> safe against this attack since MAC is checked first during decryption and ciphertext discarded if invalid
+- MAC-then-CBC -> provides A.E but padding oracle destroys it
+- MAC-then-CTR -> safe against this attack since counter mode does not use padding -> this option is available in TLS
+
+# Attacking non-atomic decryption
+SSH binary packet protocol
+SSH is an encrypt-and-mac scheme (not recommended)
+
+decryption:
+1. decrypt packet length field only
+2. read as many packet as length specified
+3. decrypt remaining ciphertext block
+4. check MAC tag and send error response if invalid. Note that decryption already start BEFORE MAC is checked. This leads to a vulnerability
+
+Other vulnerabilities:
+- MAC computed over plaintext, and sent in the clear
+- main packet is using CBC encryption with chained IV
+
+Problem
+- non-atomic decrypt
+- 'len' field decrypted and used before it is authenticated
+
+How to redesign SSH to resist this attack
+- send length field unencrypted (but MAC'd)
+- add a MAC of (sequence-num, length) right after the length field
+
+# Deriving many keys from one using KDF (key derivation function)
+
+What if source key is not uniform?
+Recall that PRF are pseudo random only when key is uniform in K;
+if SK (source key) not uniform then PRF output may not look random
+
+In fact, source key often not uniformly random. Examples
+- Key exchange protocol: key uniform only in some subset of K
+- Hardware random-number-generator: may produce biased output
+
+Extract-then-Expand paradigm
+step 1. extract pseudo-random key k from source key SK -> make it indistinguishable from uniform; using salt: a fixed non-secret string chosen at random
+step 2. expand k by using it as a PRF key
+
+HKDF: a KDF from HMAC
+
+Password-Based KDF (PBKDF)
+
+Deriving keys from passwords:
+- Do not use HKDF: passwords have insufficient entropy
+- Derived keys will be vulnerable to dictionary attacks
+
+# Deterministic encryption
+
+no nonce used
+typically used for maintaining encrypted database index; e.g. lookup record by encrypted index.
+
+problem: deterministic encryption cannot be CPA secure
+leads to significant attacks when message space M is small
+e.g. keyboard strokes sent over the wire.
+
+solution: encryptor NEVER encrypts same message twice, i.e. the pair (k,m) never repeats => deterministic CPA secure
+
+this happens when encryptor:
+- choose messages at random from a large mesg space (e.g. keys)
+- message structure ensures uniqueness (e.g. unique user ID)
+
+common mistake: CBC with fixed IV is NOT deterministic CPA secure.
+Counter mode with fixed IV is also NOT deterministic CPA secure.
+
+
+# Synthetic IV (SIV)
+Let (E,D) be a CPA-secure encryption. E(k,m; r) -> c
+Let F: K x M -> R be a secure PRF
+Define E_det((k1,k2),m) = r <- F(k1,m); c <- E(k2,m; r); output c
+well suited for messages longer than 1 AES block
+
+ensuring ciphertext integrity
+Goal: determince CPA security and ciphertext integrity to achieve deterministic authenticated encryption (DAE)
+For this can use a SIV special case: SIV-CTR (using counter mode with random IV)
+
+Can Use PRP to get DAE for shorter messages: i.e. use AES to achieve deteministic CPA secure encryption for 16 byte messages
+
+EME: construct a wide block PRP from small PRP functions
+
+# Tweakable encryption
+
+Disk encryption: no expansion
+-> encryption cannot expand plaintext (M=C, message = cipher)
+-> must use deterministic encryption, no integrity (no space to put integrity check)
+goal: deterministic CPA secure cipher
+
+Thm: if (E,D) is a deterministic CPA secure cipher with M=C then (E,D) is a PRP
+
+leakage problem if use the same key for each sector in disk: attacker can figure out the empty sectors on disk
+
+use different key for each sector? still some leakage problem in that attacker can still figure out if a sector has changed content
+
+managing keys: use master key k to generate k_t = PRF(k,t)
+
+tweakable block ciphers: goal -> construct many PRP's from a key k
+syntax: E,D: K x T x X -> X (T is the tweak space); for every t in T and k in K, E(k,t,.) is an invertible function on X, indistinguishable from random
+application: use sector number as the tweak => every sector gets its own independent PRP
+
+example1: trivial construction, supposed K=X
+E_tweak(k,t,x) = E(E(k,t),x); to encrypt n blocks need 2n evals of E(.,.)
+
+example2: XTS tweakable block cipher
+XTS: E_tweak((k1,k2), (t,i), x); N <- E(k1,t)
+to encrypt n blocks need n+1 evals of E(.,.)
+provides DAE at block-level PRP, not sector-level PRP
+popular disk encryption, e.g. MacOSXLion, etc
+
+Summary:
+- XTS is more efficient than the trivial construction
+ - both are narrow block: 16 bytes for AES
+- EME is a tweakable mode for wide block (2x slower than XTS)
+
+# Format preserving encryption
+
+e.g. for encrypting credit card numbers
+
+bbbb bbnn nnnn nnnc ~42bits
+
+1st 6 digit: b = bin number
+next 9 digits: n = acct number
+last digit: c = checksum
+
