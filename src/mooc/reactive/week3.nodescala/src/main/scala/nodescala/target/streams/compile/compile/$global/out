@@ -1,0 +1,67 @@
+[0m[[0mdebug[0m] [0m[0m
+[0m[[0mdebug[0m] [0mInitial source changes: [0m
+[0m[[0mdebug[0m] [0m	removed:Set()[0m
+[0m[[0mdebug[0m] [0m	added: Set(/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/Main.scala, /Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/nodescala.scala, /Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala)[0m
+[0m[[0mdebug[0m] [0m	modified: Set()[0m
+[0m[[0mdebug[0m] [0mRemoved products: Set()[0m
+[0m[[0mdebug[0m] [0mModified external sources: Set()[0m
+[0m[[0mdebug[0m] [0mModified binary dependencies: Set()[0m
+[0m[[0mdebug[0m] [0mInitial directly invalidated sources: Set(/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/Main.scala, /Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/nodescala.scala, /Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala)[0m
+[0m[[0mdebug[0m] [0m[0m
+[0m[[0mdebug[0m] [0mSources indirectly invalidated by:[0m
+[0m[[0mdebug[0m] [0m	product: Set()[0m
+[0m[[0mdebug[0m] [0m	binary dep: Set()[0m
+[0m[[0mdebug[0m] [0m	external source: Set()[0m
+[0m[[0mdebug[0m] [0mAll initially invalidated sources: Set(/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/Main.scala, /Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/nodescala.scala, /Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala)[0m
+[0m[[0mdebug[0m] [0mRecompiling all 3 sources: invalidated sources (3) exceeded 50.0% of all sources[0m
+[0m[[0minfo[0m] [0mCompiling 3 Scala sources to /Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/target/scala-2.9.2/classes...[0m
+[0m[[0mdebug[0m] [0mRunning cached compiler 3a9d23c0, interfacing (CompilerInterface) with Scala compiler version 2.9.2[0m
+[0m[[0mdebug[0m] [0mCalling Scala compiler with arguments  (CompilerInterface):[0m
+[0m[[0mdebug[0m] [0m	-d[0m
+[0m[[0mdebug[0m] [0m	/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/target/scala-2.9.2/classes[0m
+[0m[[0mdebug[0m] [0m	-bootclasspath[0m
+[0m[[0mdebug[0m] [0m	/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/sunrsasign.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/lib/JObjC.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_25.jdk/Contents/Home/jre/classes:/Users/ftanudjaja/.sbt/boot/scala-2.9.2/lib/scala-library.jar[0m
+[0m[[0mdebug[0m] [0m	-classpath[0m
+[0m[[0mdebug[0m] [0m	/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/target/scala-2.9.2/classes[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/Main.scala:3: object language is not a member of package scala[0m
+[0m[[31merror[0m] [0mimport scala.language.postfixOps[0m
+[0m[[31merror[0m] [0m             ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/Main.scala:5: object duration is not a member of package concurrent[0m
+[0m[[31merror[0m] [0mimport scala.concurrent.duration._[0m
+[0m[[31merror[0m] [0m                        ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/nodescala.scala:5: object duration is not a member of package concurrent[0m
+[0m[[31merror[0m] [0mimport scala.concurrent.duration._[0m
+[0m[[31merror[0m] [0m                        ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala:5: object duration is not a member of package concurrent[0m
+[0m[[31merror[0m] [0mimport scala.concurrent.duration._[0m
+[0m[[31merror[0m] [0m                        ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala:96: `implicit' modifier can be used only for values, variables and methods[0m
+[0m[[31merror[0m] [0m  implicit class FutureOps[T](val f: Future[T]) extends AnyVal {[0m
+[0m[[31merror[0m] [0m                 ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala:16: `implicit' modifier can be used only for values, variables and methods[0m
+[0m[[31merror[0m] [0m  implicit class FutureCompanionOps[T](val f: Future.type) extends AnyVal {[0m
+[0m[[31merror[0m] [0m                 ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/Main.scala:17: type mismatch;[0m
+[0m[[31merror[0m] [0m found   : req.type (with underlying type nodescala.NodeScala.Request)[0m
+[0m[[31merror[0m] [0m required: ?{val filter: ?}[0m
+[0m[[31merror[0m] [0mNote that implicit conversions are not applicable because they are ambiguous:[0m
+[0m[[31merror[0m] [0m both method zipped2ToTraversable in object Predef of type [El1, El2](zz: (_$1, _$2)#Zipped[_, El1, _, El2])Traversable[(El1, El2)][0m
+[0m[[31merror[0m] [0m and method zipped3ToTraversable in object Predef of type [El1, El2, El3](zz: (_$5, _$6, _$7)#Zipped[_, El1, _, El2, _, El3])Traversable[(El1, El2, El3)][0m
+[0m[[31merror[0m] [0m are possible conversion functions from req.type to ?{val filter: ?}[0m
+[0m[[31merror[0m] [0m      req => (for ((k, v) <- req) yield (k + " -> " + v)).iterator[0m
+[0m[[31merror[0m] [0m                             ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/nodescala.scala:33: value hasNext is not a member of nodescala.NodeScala.Response[0m
+[0m[[31merror[0m] [0m    while (response.hasNext && token.nonCancelled) {[0m
+[0m[[31merror[0m] [0m                    ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/nodescala.scala:34: value next is not a member of nodescala.NodeScala.Response[0m
+[0m[[31merror[0m] [0m    	exchange.write(response.next)  [0m
+[0m[[31merror[0m] [0m    	                        ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala:1: object language is not a member of package scala[0m
+[0m[[31merror[0m] [0mimport scala.language.postfixOps[0m
+[0m[[31merror[0m] [0m             ^[0m
+[0m[[31merror[0m] [0m/Users/ftanudjaja/Documents/workscala/nodescala/src/main/scala/nodescala/package.scala:3: NonFatal is not a member of scala.util.control[0m
+[0m[[31merror[0m] [0mimport scala.util.control.NonFatal[0m
+[0m[[31merror[0m] [0m       ^[0m
+[0m[[31merror[0m] [0m11 errors found[0m
+[0m[[0mdebug[0m] [0mCompilation failed (CompilerInterface)[0m
+[0m[[31merror[0m] [0m(compile:[31mcompile[0m) Compilation failed[0m
