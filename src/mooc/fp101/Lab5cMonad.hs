@@ -1,0 +1,136 @@
+module Lab5 where
+
+import Control.Monad
+
+data Concurrent a = Concurrent ((a -> Action) -> Action)
+
+data Action 
+    = Atom (IO Action)
+    | Fork Action Action
+    | Stop
+
+instance Show Action where
+    show (Atom x) = "atom"
+    show (Fork x y) = "fork " ++ show x ++ " " ++ show y
+    show Stop = "stop"
+
+-- ===================================
+-- Ex. 0
+-- ===================================
+
+action :: Concurrent a -> Action
+action (Concurrent fa) = fa (\a -> Stop)
+
+-- ===================================
+-- Ex. 1
+-- ===================================
+
+stop :: Concurrent a
+stop = Concurrent (\c -> Stop)
+
+-- ===================================
+-- Ex. 2
+-- ===================================
+
+atom :: IO a -> Concurrent a
+atom m = Concurrent (\c -> Atom (m >>= (\ a -> return (c a))))
+
+-- ===================================
+-- Ex. 3
+-- ===================================
+
+fork :: Concurrent a -> Concurrent ()
+fork ca = Concurrent(\c -> Fork (action ca) (c ()))
+
+
+par :: Concurrent a -> Concurrent a -> Concurrent a
+par ca cb = Concurrent(\c -> Fork (action ca) (action cb))
+
+
+-- ===================================
+-- Ex. 4
+-- ===================================
+
+-- simplified case as per hint
+bind1 :: ((a -> Action) -> Action) -> (a -> ((b -> Action) -> Action)) -> ((b -> Action) -> Action)
+bind1 f g = \x -> f (\a -> g a x)
+
+bind2 :: Concurrent a -> (a -> (b -> Action) -> Action) -> ((b -> Action) -> Action)
+bind2 (Concurrent f) g =  \x -> f (\a -> g a x)
+
+bind3 :: Concurrent a -> (a -> Concurrent b) -> ((b -> Action) -> Action)
+bind3 (Concurrent f) g =  \x -> f (\a -> (case g a of (Concurrent h) -> h x))
+
+
+instance Monad Concurrent where
+    (Concurrent f) >>= g = Concurrent (\x -> f (\a -> let (Concurrent h) = g a in h x))
+    -- can use 'case' instead of 'let'
+    -- (Concurrent f) >>= g = Concurrent (\x -> f (\a -> case g a of (Concurrent h) -> h x))
+    return x = Concurrent (\c -> c x)
+
+
+-- ===================================
+-- Ex. 5
+-- ===================================
+
+roundRobin :: [Action] -> IO ()
+roundRobin [] = return ()
+roundRobin (x : xs) = case x of
+    Atom a -> a >>= (\a -> roundRobin (xs ++ [a]))
+    Fork f g -> roundRobin (f : g : xs)
+    Stop -> roundRobin xs
+
+-- ===================================
+-- Tests
+-- ===================================
+
+ex0 :: Concurrent ()
+ex0 = par (loop (genRandom 1337)) (loop (genRandom 2600) >> atom (putStrLn ""))
+
+ex1 :: Concurrent ()
+ex1 = do atom (putStr "Haskell")
+         fork (loop $ genRandom 7331) 
+         loop $ genRandom 42
+         atom (putStrLn "")
+
+
+-- ===================================
+-- Helper Functions
+-- ===================================
+
+run :: Concurrent a -> IO ()
+run x = roundRobin [action x]
+
+genRandom :: Int -> [Int]
+genRandom 1337 = [1, 96, 36, 11, 42, 47, 9, 1, 62, 73]
+genRandom 7331 = [17, 73, 92, 36, 22, 72, 19, 35, 6, 74]
+genRandom 2600 = [83, 98, 35, 84, 44, 61, 54, 35, 83, 9]
+genRandom 42   = [71, 71, 17, 14, 16, 91, 18, 71, 58, 75]
+
+loop :: [Int] -> Concurrent ()
+loop xs = mapM_ (atom . putStr . show) xs
+
+
+--- Test samples from the discussion forum
+
+myex0 = run $ (ho >> ho >> ho) >>
+              (hi >> hi >> hi) >> atom (putStr "\n")
+  where ho = atom (putStr "ho")
+        hi = atom (putStr "hi")
+--hohohohihihi
+
+myex1 = run $ fork (ho >> ho >> ho) >>
+                   (hi >> hi >> hi) >> atom (putStr "\n")
+  where ho = atom (putStr "ho")
+        hi = atom (putStr "hi")
+--hohihohihohi
+
+myex2 = run $ fork (put3 "ba") >> fork (put3 "di") >>
+        put3 "bu" >> atom (putStr "\n")
+  where put3 = sequence . take 3 . repeat . atom . putStr
+--babadibubadibudibu
+
+myex3 = run $ par (put3 "ba") (put3 "di" >> stop) >>
+              atom (putStr "\n")
+  where put3 = sequence . take 3 . repeat . atom . putStr
+-- badibadibadi

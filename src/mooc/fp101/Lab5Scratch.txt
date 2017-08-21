@@ -1,0 +1,17 @@
+action :: ((a -> Action) -> Action) -> Action
+
+action f = \x -> Fork (f x) Stop
+
+data Concurrent a = Concurrent ((a -> Action) -> Action)
+
+
+action :: Concurrent a -> Action
+action (Concurrent ((a -> Action) -> Action)) = 
+
+
+How can you get a value of type 'Action', without making one up on the spot? 
+
+If you look at the definition of Concurrent you'll see that the value it represents has type '((a -> Action) -> Action)'. 
+
+In other words every 'Concurrent a' value is a function, that when given a function of type 'a -> Action' returns an 'Action'. 
+This is perfect, since our 'action' function needs to return a value of 'Action' type as well. We do need another function however that we could pass to function we got from Concurrent. We can create functions on the spot though if you remember the previous lectures and if you read the text of the exercise again it should be clear what this newly created function should do.
